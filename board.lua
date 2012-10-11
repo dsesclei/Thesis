@@ -3,9 +3,16 @@ local scene = storyboard.newScene()
 
 function scene:createScene( event )
 	local group = self.view
+
+  -- Create a solid white background
+  display.newRect(0, 0, display.contentWidth, display.contentHeight)
+
   local board = display.newImage("board.png")
   board.width = 300
   board.height = 300
+  -- Center the board
+  board.x = display.contentWidth / 2
+  board.y = display.contentHeight / 2
 end
 
 function scene:enterScene( event )
