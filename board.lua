@@ -7,10 +7,20 @@ local board = nil
 function definitions()
   -- Listener Function for Touch Events on the Board
   function board:touch( event )
-    if not self.touches then
+    if self.touches and self.touches[1] then
+      if self.touches[1].id == event.id then
+        event.lastX = self.touches[1].lastX
+        event.lastY = self.touches[1].lastY
+        self.touches[1] = event
+      elseif self.touches[2] and self.touches[2].id == event.id then
+        event.lastX = self.touches[2].lastX
+        event.lastY = self.touches[2].lastY
+        self.touches[2] = event
+      end
+    else
       self.touches = {}
     end
-    
+
     if event.phase == "cancelled" or event.phase == "ended" then
       self.lastDistance = nil
       if self.touches[1].id == event.id then
@@ -24,7 +34,6 @@ function definitions()
     if event.phase == "began" then
       if #self.touches == 0 then
         self.touches[1] = event
-        self.startX, self.startY = board.x, board.y
       elseif #self.touches == 2 then
         self.touches[1] = event
       else
@@ -33,16 +42,11 @@ function definitions()
     end
 
     if event.phase == "moved" then
-      if self.touches[1].id == event.id then
-        self.touches[1] = event
-      else
-        self.touches[2] = event
-      end
 
       if #self.touches == 1 then
         -- Dragging
-        board.x = self.startX + event.x - event.xStart
-        board.y = self.startY + event.y - event.yStart
+        self.x = self.x + event.x - event.lastX
+        self.y = self.y + event.y - event.lastY
       else
         -- Pinch to Zoom Resizing
         x1, x2, y1, y2 = self.touches[1].x, self.touches[2].x, self.touches[1].y, self.touches[2].y
@@ -50,14 +54,28 @@ function definitions()
 
         if self.lastDistance then
           dd = distance - self.lastDistance
+
+          -- Enforce a maximum and minimum size
+          scale = self.xScale + dd / 300
+          scale = math.min( scale, 3 )
+          scale = math.max( scale, 1 )
           
-          self.xScale = self.xScale + dd / 300
-          self.yScale = self.yScale + dd / 300
-          print(self.xScale)
+          self.xScale = scale
+          self.yScale = scale
         end
 
         self.lastDistance = distance
       end
+    end
+
+    if self.touches[1] and self.touches[1].id == event.id then
+      self.touches[1].lastX = event.x
+      self.touches[1].lastY = event.y
+    end
+
+    if self.touches[2] and self.touches[2].id == event.id then
+      self.touches[2].lastX = event.x
+      self.touches[2].lastY = event.y
     end
   end
 end
@@ -74,7 +92,7 @@ function scene:createScene( event )
   -- Center the board
   board.x = display.contentWidth / 2
   board.y = display.contentHeight / 2
-  group:addEventListener( "touch", board )
+  Runtime:addEventListener( "touch", board )
 
   definitions()
 
