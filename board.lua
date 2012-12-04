@@ -89,13 +89,11 @@ function board:touch( event )
   end
 end
 
-board.stones = {}
-function board.stones:addStone( stone )
-  table.insert(board.stones, stone)
-end
+board.stones = display.newGroup()
 
 function board.stones:updateStones( dx, dy )
-  for i, stone in ipairs(board.stones) do
+  for i = 1, board.stones.numChildren do
+    stone = board.stones[i]
     if dx ~= 0 or dy ~= 0 then
       stone.x = stone.x + dx
       stone.y = stone.y + dy

@@ -23,6 +23,7 @@ function scene:createScene( event )
 
   group:insert( background )
   group:insert( board )
+  group:insert( board.stones )
   group:insert( panel )
 end
 
