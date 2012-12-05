@@ -45,16 +45,8 @@ function board:touch( event )
     
     if #self.touches == 1 then
       -- Dragging
-
-      -- Used to calculate dx and dy in order to update the stones
-      local lastX = self.x
-      local lastY = self.y
-
       self.x = self.x + event.x - event.lastX
       self.y = self.y + event.y - event.lastY
-
-      dx = self.x - lastX
-      dy = self.y - lastY
     else
       -- Pinch to Zoom Resizing
       x1, x2, y1, y2 = self.touches[1].x, self.touches[2].x, self.touches[1].y, self.touches[2].y
@@ -75,7 +67,7 @@ function board:touch( event )
       self.lastDistance = distance
     end
 
-    self.stones:updateStones( dx, dy )
+    self.stones:updateStones()
   end
 
   if self.touches[1] and self.touches[1].id == event.id then
@@ -91,16 +83,33 @@ end
 
 board.stones = display.newGroup()
 
-function board.stones:updateStones( dx, dy )
+-- Precondition: A stone that has been dropped on the screen
+-- Postcondition: If the stone falls on the grid, it is assigned a row and column.
+--                otherwise, the function returns false and it is deleted.
+function board.stones:snapToGrid( stone )
+  local x = stone.x - board.x + (board.width * board.xScale) / 2
+  local y = stone.y - board.y + (board.height * board.yScale) / 2
+  local col = math.round( (x * 18) / (board.width * board.xScale) )
+  local row = math.round( (y * 18) / (board.width * board.yScale) )
+  
+  if col >= 0 and col <= 18 and row >= 0 and row <= 18 then
+    stone.row = row
+    stone.col = col
+    return true
+  else
+    return false
+  end
+end
+
+-- Precondition: The board is resized or moved.
+-- Postcondition: The stones are updated to match.
+function board.stones:updateStones()
   for i = 1, board.stones.numChildren do
     stone = board.stones[i]
-    if dx ~= 0 or dy ~= 0 then
-      stone.x = stone.x + dx
-      stone.y = stone.y + dy
-    else
-      stone.xScale = 0.09 * board.xScale
-      stone.yScale = 0.09 * board.yScale
-    end
+    stone.x = board.x - (board.width * board.xScale) / 2 + stone.col * (board.width * board.xScale / 18)
+    stone.y = board.y - (board.height * board.yScale) / 2 + stone.row * (board.height * board.yScale / 18)
+    stone.xScale = 0.09 * board.xScale
+    stone.yScale = 0.09 * board.yScale
   end
 end
 

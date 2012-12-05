@@ -19,7 +19,13 @@ function panel:touch( event )
   if event.phase == "cancelled" or event.phase == "ended" then
     display.getCurrentStage():setFocus( nil )
 
-    board.stones:insert( self.stone )
+    if board.stones:snapToGrid( self.stone ) then
+      board.stones:insert( self.stone )
+      board.stones:updateStones()
+    else
+      self.stone:removeSelf()
+    end
+
     self.stone = nil
   end
 
