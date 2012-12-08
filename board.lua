@@ -196,11 +196,12 @@ function board.stones:updateStones()
 end
 
 function board.stones:removeGroup(row, col, color)
-  local stone = board.grid[row][col]
-  color = color or stone.color
   if row < 1 or row > 19 or col < 1 or col > 19 then
     return
   end
+
+  local stone = board.grid[row][col]
+  color = color or stone.color
 
   if stone and stone.color == color then
     board.stones:remove(stone)
@@ -230,19 +231,19 @@ function board.stones:countLiberties(row, col, color, hist)
   elseif board.grid[row][col].color == color then
     local left, right, up, down = 0, 0, 0, 0
 
-    if not hist[row - 1][col] then
+    if hist[row - 1] and not hist[row - 1][col] then
       left, hist = self:countLiberties(row - 1, col, color, hist)
     end
 
-    if not hist[row + 1][col] then
+    if hist[row + 1] and not hist[row + 1][col] then
       right, hist = self:countLiberties(row + 1, col, color, hist)
     end
 
-    if not hist[row][col - 1] then
+    if hist[col - 1] and not hist[row][col - 1] then
       up, hist = self:countLiberties(row, col - 1, color, hist)
     end
 
-    if not hist[row][col + 1] then
+    if hist[col + 1] and not hist[row][col + 1] then
       down, hist = self:countLiberties(row, col + 1, color, hist)
     end
 
