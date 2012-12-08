@@ -19,12 +19,7 @@ function panel:touch( event )
   if event.phase == "cancelled" or event.phase == "ended" then
     display.getCurrentStage():setFocus( nil )
 
-    if board.stones:snapToGrid( self.stone ) then
-      board.stones:insert( self.stone )
-      board.stones:updateStones()
-    else
-      self.stone:removeSelf()
-    end
+    board.stones:addStone( self.stone )
 
     self.stone = nil
   end
@@ -32,7 +27,7 @@ function panel:touch( event )
   -- Create new stone
   if event.phase == "began" then
     display.getCurrentStage():setFocus( self )
-    self.stone = display.newImage( "white_stone.png" )
+    self.stone = display.newImage( board.turn .. "_stone.png" )
     self.stone.x = event.x
     self.stone.y = event.y
     self.stone.xScale = 0.09 * board.xScale
