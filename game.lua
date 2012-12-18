@@ -16,10 +16,14 @@ function scene:createScene( event )
   board.x = display.contentWidth / 2
   board.y = display.contentHeight / 2
   Runtime:addEventListener( "touch", board )
+  Runtime:addEventListener( "tap", board )
 
   local panel = require( "panel" )
-  panel:addEventListener( "touch", panel )
+  --panel:addEventListener( "touch", panel )
   panel.setBoard( board )
+  board.setPanel( panel )
+
+  panel:updateScores()
 
   group:insert( background )
   group:insert( board )

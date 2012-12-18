@@ -1,9 +1,12 @@
 local panel = display.newRect( 0, 0, display.contentWidth, 100 )
 panel:setFillColor( 0, 0, 0 )
-panel.alpha = 0.7
+panel.alpha = .7
 
-panel.txt = display.newText( "Drag stones from here to the board below", 10, 20, "Helvetica", 28 )
+panel.txt = display.newText( "Hello", 10, 20, "TrebuchetMS-Bold", 36 )
 panel.txt:setReferencePoint( display.TopCenterReferencePoint )
+
+panel.txt.x = display.contentWidth / 2
+panel.txt.y = 25
 
 local board = nil
 
@@ -11,6 +14,10 @@ local board = nil
 -- Postcondition: A local variable is set to this reference, for easy access later
 function panel.setBoard( givenBoard )
   board = givenBoard
+end
+
+function panel:updateScores()
+  panel.txt.text = "Black: " .. board.blackCaptures .. "\t\t\t\tWhite: " .. board.whiteCaptures
 end
 
 -- Precondition: The panel is touched

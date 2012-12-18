@@ -1,4 +1,13 @@
 local board = display.newImage("board.png")
+local panel = nil
+board.whiteCaptures = 0
+board.blackCaptures = 0
+
+-- Precondition: A reference to the panel
+-- Postcondition: A local variable is set to this reference, for easy access later
+function board.setPanel( givenPanel )
+  panel = givenPanel
+end
 
 -- Listener Function for Touch Events on the Board
 -- Precondition: A touch begins, moves, or ends
@@ -81,6 +90,15 @@ function board:touch(event)
   end
 end
 
+function board:tap( event )
+  local stone = display.newImage( board.turn .. "_stone.png" )
+  stone.x = event.x
+  stone.y = event.y
+  stone.xScale = 0.09 * board.xScale
+  stone.yScale = 0.09 * board.xScale
+  board.stones:addStone( stone )
+end
+
 board.turn = "black"
 board.stones = display.newGroup()
 
@@ -113,7 +131,6 @@ function board.stones:addStone(stone)
 
     -- Prevent suicides
     if self:countLiberties(stone.row, stone.col, stone.color) == 0 then
-      print("suicide blocked")
       board.grid[stone.row][stone.col] = nil
       stone:removeSelf()
 
@@ -153,12 +170,7 @@ function board.stones:captureStones(stone)
     table.insert(adj, board.grid[stone.row][stone.col + 1])
   end
 
-  
   for i,v in ipairs(adj) do
-    print("-----")
-    print(v.row, v.col)
-    print(self:countLiberties(v.row, v.col, v.color))
-    print(v.color, stone.color)
     if self:countLiberties(v.row, v.col, v.color) == 0 and v.color ~= stone.color then
       self:removeGroup(v.row, v.col)
     end
@@ -204,6 +216,14 @@ function board.stones:removeGroup(row, col, color)
   color = color or stone.color
 
   if stone and stone.color == color then
+    if stone.color == "black" then
+      board.whiteCaptures = board.whiteCaptures + 1
+    else
+      board.blackCaptures = board.blackCaptures + 1
+    end
+
+    panel:updateScores()
+
     board.stones:remove(stone)
     board.grid[row][col] = nil
 
