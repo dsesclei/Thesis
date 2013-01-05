@@ -2,11 +2,22 @@ local panel = display.newRect( 0, 0, display.contentWidth, 100 )
 panel:setFillColor( 0, 0, 0 )
 panel.alpha = .7
 
-panel.txt = display.newText( "Hello", 10, 20, "TrebuchetMS-Bold", 36 )
-panel.txt:setReferencePoint( display.TopCenterReferencePoint )
+panel.black = display.newText( "", 0, 0, "Arial", 36 )
+panel.black:setReferencePoint( display.TopCenterReferencePoint )
 
-panel.txt.x = display.contentWidth / 2
-panel.txt.y = 25
+panel.black.x = display.contentWidth / 4
+panel.black.y = 40
+
+panel.white = display.newText( "", 0, 0, "Arial", 36 )
+panel.white:setReferencePoint( display.TopCenterReferencePoint )
+
+panel.white.x = display.contentWidth - display.contentWidth / 4
+panel.white.y = 40
+
+panel.info = display.newText( "Tap here to pass", 0, 0, "Arial", 27 )
+panel.info:setReferencePoint( display.TopCenterReferencePoint )
+panel.info.x = display.contentWidth / 2
+panel.info.y = 5
 
 local board = nil
 
@@ -17,36 +28,54 @@ function panel.setBoard( givenBoard )
 end
 
 function panel:updateScores()
-  panel.txt.text = "Black: " .. board.blackCaptures .. "\t\t\t\tWhite: " .. board.whiteCaptures
+  panel.black.text = "Black: " .. board.blackScore
+  panel.white.text = "White: " .. board.whiteScore
 end
 
--- Precondition: The panel is touched
--- Postcondition: The stones are moved or created accordingly
-function panel:touch( event )
-  if event.phase == "cancelled" or event.phase == "ended" then
-    display.getCurrentStage():setFocus( nil )
-
-    board.stones:addStone( self.stone )
-
-    self.stone = nil
+function panel:updateTurn()
+  if board.turn == "black" then
+    panel.black.alpha = 1
+    panel.white.alpha = .5
+  else
+    panel.white.alpha = 1
+    panel.black.alpha = .5
   end
+end
 
-  -- Create new stone
-  if event.phase == "began" then
-    display.getCurrentStage():setFocus( self )
-    self.stone = display.newImage( board.turn .. "_stone.png" )
-    self.stone.x = event.x
-    self.stone.y = event.y
-    self.stone.xScale = 0.09 * board.xScale
-    self.stone.yScale = 0.09 * board.xScale
+-- Precondition: The panel is tapped
+-- Postcondition: The player passes. If both players pass, the game ends
+function panel:tap( event )
+  if board.gameOver then
+    panel.info.text = "Tap here to pass"
+    board:reset()
+  else
+    if board.turn == "black" then
+      panel.black.text = "PASS"
+      board.turn = "white"
+    else
+      panel.white.text = "PASS"
+      board.turn = "black"
+    end
+
+    panel:updateTurn()
+
+    if board.passed == true then
+      board:endGame()
+      panel.black.alpha = 1
+      panel.white.alpha = 1
+      if board.blackScore > board.whiteScore then
+        panel.info.text = "Black wins!"
+      elseif board.blackScore < board.whiteScore then
+        panel.info.text = "White wins!"
+      else
+        panel.info.text = "Tie game!"
+      end
+
+      panel.info.text = panel.info.text .. " Tap here to play again."
+    end
+
+    board.passed = true
   end
-
-  if event.phase == "moved" then
-    self.stone.x = event.x
-    self.stone.y = event.y
-  end
-
-  return true
 end
 
 return panel

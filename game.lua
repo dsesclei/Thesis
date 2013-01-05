@@ -7,23 +7,27 @@ function scene:createScene( event )
 	local group = self.view
 
   -- Create a solid white background
-  local background = display.newRect( 0, 0, display.contentWidth, display.contentHeight )
+  --local background = display.newRect( 0, 0, display.contentWidth, display.contentHeight )
 
   local board = require( "board" )
-  board.width = 500
-  board.height = 500
-  -- Center the board
-  board.x = display.contentWidth / 2
-  board.y = display.contentHeight / 2
   Runtime:addEventListener( "touch", board )
   Runtime:addEventListener( "tap", board )
 
   local panel = require( "panel" )
-  --panel:addEventListener( "touch", panel )
+  panel:addEventListener( "tap", panel )
+
+  local background = display.newImage( "wood.png" )
+  background.width = 1536
+  background.height = 800
+  background.x = 230
+  background.y = 200
+  background:rotate( 90 )
+  board.background = background
+
   panel.setBoard( board )
   board.setPanel( panel )
 
-  panel:updateScores()
+  board:reset()
 
   group:insert( background )
   group:insert( board )

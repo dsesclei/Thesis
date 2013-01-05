@@ -1,7 +1,93 @@
-local board = display.newImage("board.png")
+--local board = display.newImage( "board_new.png" )
+local board = display.newGroup()
+
+function drawBoard()
+  local weight = 2
+  local box = display.newRect( 0, 0, 500, 500 )
+  box:setFillColor( 0, 0, 0, 0 )
+  box:setStrokeColor( 0, 0, 0 )
+  box.strokeWidth = weight
+
+  local dd = 500 / 18
+
+  for i=1,18 do
+    local line = display.newLine( i * dd, 0, i * dd, 500 )
+    line.width = weight
+    line:setColor( 0, 0, 0 )
+    board:insert( line )
+  end
+
+  for i=1,18 do
+    local line = display.newLine( 0, i * dd, 500, i * dd )
+    line.width = weight
+    line:setColor( 0, 0, 0 )
+    board:insert( line )
+  end
+
+  points = { 4, 4,
+             4, 10,
+             4, 16,
+             10, 4,
+             10, 10,
+             10, 16,
+             16, 4,
+             16, 10,
+             16, 16 }
+
+  local pointWidth = 12
+  while #points > 0 do
+    local x = table.remove( points, 1 ) - 1
+    local y = table.remove( points, 1 ) - 1
+    local point = display.newRect( x * dd - ( pointWidth / 2 ), y * dd - ( pointWidth / 2), pointWidth, pointWidth )
+    point:setFillColor( 0, 0, 0 )
+    board:insert( point )
+  end
+
+  board:insert( box )
+  board.x = 0
+  board.y = 0
+  board:setReferencePoint( display.CenterReferencePoint )
+  board:scale( 2, 2 )
+end
+
+drawBoard()
+
 local panel = nil
-board.whiteCaptures = 0
-board.blackCaptures = 0
+
+function newGrid()
+  local grid = {}
+
+  for i=1,19 do
+    grid[i] = {}
+  end
+
+  return grid
+end
+
+board.stones = display.newGroup()
+
+function board:reset()
+  board.width = 500
+  board.height = 500
+  -- Center the board
+  board.x = display.contentWidth / 2
+  board.y = display.contentHeight / 2
+
+  board.whiteScore = 0
+  board.blackScore = 0
+  board.passed = false
+  board.gameOver = false
+  board.turn = "black"
+
+  while board.stones.numChildren > 0 do
+    board.stones:remove( 1 )
+  end
+
+  board.grid = newGrid()
+
+  panel:updateScores()
+  panel:updateTurn()
+end
 
 -- Precondition: A reference to the panel
 -- Postcondition: A local variable is set to this reference, for easy access later
@@ -91,28 +177,15 @@ function board:touch(event)
 end
 
 function board:tap( event )
-  local stone = display.newImage( board.turn .. "_stone.png" )
-  stone.x = event.x
-  stone.y = event.y
-  stone.xScale = 0.09 * board.xScale
-  stone.yScale = 0.09 * board.xScale
-  board.stones:addStone( stone )
-end
-
-board.turn = "black"
-board.stones = display.newGroup()
-
-function newGrid()
-  local grid = {}
-
-  for i=1,19 do
-    grid[i] = {}
+  if not board.gameOver then
+    local stone = display.newImage( board.turn .. "_stone.png" )
+    stone.x = event.x
+    stone.y = event.y
+    stone.xScale = 0.09 * board.xScale
+    stone.yScale = 0.09 * board.xScale
+    board.stones:addStone( stone )
   end
-
-  return grid
 end
-
-board.grid = newGrid()
 
 function board.stones:addStone(stone)
   -- Add the stone if it is over an empty grid location
@@ -143,7 +216,10 @@ function board.stones:addStone(stone)
       return
     end
 
+    board.passed = false
 
+    panel:updateTurn()
+    panel:updateScores()
     self:insert(stone)
     self:updateStones()
   else
@@ -175,8 +251,8 @@ function board.stones:captureStones(stone)
       self:removeGroup(v.row, v.col)
     end
   end
-
 end
+
 -- Precondition: A stone that has been dropped on the screen
 -- Postcondition: If the stone falls on the grid, it is assigned a row and column.
 --                otherwise, the function returns false and it is deleted.
@@ -207,6 +283,8 @@ function board.stones:updateStones()
   end
 end
 
+-- Precondition: The position and color of a stone in the group to be removed
+-- Postcondition: The group is removed from the board
 function board.stones:removeGroup(row, col, color)
   if row < 1 or row > 19 or col < 1 or col > 19 then
     return
@@ -217,12 +295,10 @@ function board.stones:removeGroup(row, col, color)
 
   if stone and stone.color == color then
     if stone.color == "black" then
-      board.whiteCaptures = board.whiteCaptures + 1
+      board.whiteScore = board.whiteScore + 1
     else
-      board.blackCaptures = board.blackCaptures + 1
+      board.blackScore = board.blackScore + 1
     end
-
-    panel:updateScores()
 
     board.stones:remove(stone)
     board.grid[row][col] = nil
@@ -272,5 +348,28 @@ function board.stones:countLiberties(row, col, color, hist)
     return 0, hist
   end
 end
+
+-- Precondition: Both players have passed
+-- Postcondition: The game ends and the score is counted up
+function board:endGame()
+  board.gameOver = true
+
+  -- Use Stone Scoring method. A player's score is the number of stones that
+  -- they have on the board added to the number of stones that they have captured.
+  for ir,r in pairs(board.grid) do
+    for ic, c in pairs(r) do
+      if board.grid[ir] ~= nil and board.grid[ir][ic] ~= nil then
+        if board.grid[ir][ic].color == "black" then
+          board.blackScore = board.blackScore + 1
+        else
+          board.whiteScore = board.whiteScore + 1
+        end
+      end
+    end
+  end
+  
+  panel:updateScores()
+end
+
 
 return board
