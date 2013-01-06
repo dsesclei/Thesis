@@ -1,14 +1,7 @@
------------------------------------------------------------------------------------------
---
--- main.lua
---
------------------------------------------------------------------------------------------
-
--- hide the status bar
+-- hide the status bar on iOS devices
 display.setStatusBar( display.HiddenStatusBar )
 
--- include the Corona "storyboard" module
 local storyboard = require "storyboard"
 
--- load menu screen
-storyboard.gotoScene( "game" )
+-- Load menu screen
+storyboard.gotoScene( "menu" )
