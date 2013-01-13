@@ -47,10 +47,7 @@ function drawBoard()
   end
 
   board:insert( box )
-  board.x = 0
-  board.y = 0
   board:setReferencePoint( display.CenterReferencePoint )
-  board:scale( 1, 1 )
 end
 
 -- Postcondition: An empty grid is returned
@@ -70,7 +67,8 @@ function board:reset()
   board.x = display.contentWidth / 2
   board.y = display.contentHeight / 2
 
-  board:scale( 1, 1 )
+  board.xScale = 1
+  board.yScale = 1
 
   board.whiteScore = 0
   board.blackScore = 0

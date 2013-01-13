@@ -1,4 +1,4 @@
-local panel = display.newRect( 0, 0, display.contentWidth, 100 )
+local panel = display.newRect( display.screenOriginX, 0, display.contentWidth - display.screenOriginX * 2, 100 )
 
 -- Precondition: A reference to the board
 -- Postcondition: A local variable is set to this reference, for easy access later

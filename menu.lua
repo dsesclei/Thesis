@@ -6,18 +6,18 @@ function scene:createScene( event )
 	local group = self.view
 
 	-- display a background image
-	local background = display.newImage( "goban.png" )
-	background:setReferencePoint( display.CenterReferencePoint )
-	background.x, background.y = 450, 450
-  background:scale( 2, 2 )
+	local background = display.newImage( "goban.png", true )
+	background:setReferencePoint( display.BottomRightReferencePoint )
+	background.x, background.y = display.contentWidth + 400, display.contentHeight + 000
+  background:scale( 1, 1 )
 
-  local banner = display.newImage( "banner.png" )
+  local banner = display.newImage( "banner.png", true )
 	banner:setReferencePoint( display.CenterReferencePoint )
   banner:scale( 1.5, 1.5 )
   banner.x, banner.y = 150, display.contentHeight / 2
 	
   -- Create a faded white background behind the banner for legibility
-  local banner_bg = display.newRect( 0, banner.y - banner.height * 1.5 / 2 - 25, display.contentWidth, banner.height * 1.5 + 50 )
+  local banner_bg = display.newRect( display.screenOriginX, banner.y - banner.height * 1.5 / 2 - 25, display.contentWidth - display.screenOriginX * 2, banner.height * 1.5 + 50 )
 	banner_bg:setReferencePoint( display.TopLeftReferencePoint )
   banner_bg:setFillColor( 255, 255, 255 )
   banner_bg.alpha = .5

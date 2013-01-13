@@ -12,12 +12,10 @@ function scene:createScene( event )
   board = require( "board" )
   panel = require( "panel" )
 
-  local background = display.newImage( "wood.png" )
-  background.width = 1536
-  background.height = 800
-  background.x = 230
-  background.y = 200
-  background:rotate( 90 )
+  local background = display.newImage( "wood.png", true )
+  background:setReferencePoint( display.TopLeftReferencePoint )  
+  background.x = display.screenOriginX
+  background.y = 0
   board.background = background
 
   panel.setBoard( board )
