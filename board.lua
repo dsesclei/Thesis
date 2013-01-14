@@ -64,8 +64,8 @@ end
 -- Postcondition: The game is reset to its default state
 function board:reset()
   -- Center the board
-  board.x = display.contentWidth / 2
-  board.y = display.contentHeight / 2
+  board.x = display.contentCenterX
+  board.y = display.contentCenterY
 
   board.xScale = 1
   board.yScale = 1
@@ -111,6 +111,26 @@ function board:touch( event )
 
   if event.phase == "cancelled" or event.phase == "ended" then
     display.getCurrentStage():setFocus( nil )
+    if self.isTap then
+      -- The board was tapped, not dragged or resized. Add a stone.
+      if not board.gameOver then
+        local stroke = 35
+        local stone = display.newCircle( 0, 0, 140 - ( stroke / 2 ) )
+
+        stone:setStrokeColor( 0, 0, 0 )
+        if board.turn == "black" then
+          stone:setFillColor( 0, 0, 0 )
+        end
+
+        stone.strokeWidth = stroke
+        stone.x = event.x
+        stone.y = event.y
+        stone.xScale = 0.09 * board.xScale
+        stone.yScale = 0.09 * board.xScale
+        board.stones:addStone( stone )
+      end
+    end
+
     self.lastDistance = nil
     if self.touches[1].id == event.id then
       self.touches[1] = self.touches[2]
@@ -122,6 +142,9 @@ function board:touch( event )
 
   if event.phase == "began" then
     display.getCurrentStage():setFocus( self )
+    self.isTap = true -- Assume this touch is a tap initially.
+    self.distance = 0, 0
+
     if #self.touches == 0 then
       self.touches[1] = event
     elseif #self.touches == 2 then
@@ -132,12 +155,20 @@ function board:touch( event )
   end
 
   if event.phase == "moved" then
-    local dx, dy = 0, 0
-    
     if #self.touches == 1 then
       -- Dragging
-      self.x = self.x + event.x - event.lastX
-      self.y = self.y + event.y - event.lastY
+      local dx = event.x - event.lastX
+      local dy = event.y - event.lastY
+      self.distance = self.distance + math.abs( dx ) + math.abs( dy )
+
+      -- Tablets are sensitive and it's difficult to place a piece down
+      -- without moving the board a pixel or two. This ensures that the
+      -- finger moved a significant amount before moving the board.
+      if self.distance > 20 then
+        self.isTap = false
+        self.x = self.x + dx
+        self.y = self.y + dy
+      end
 
       -- Boundaries that ensure it won't go beyond the 4 4 star point
       if self.x < -165 * self.xScale then
@@ -157,6 +188,7 @@ function board:touch( event )
       end
     else
       -- Pinch to Zoom Resizing
+      self.isTap = false
       x1, x2, y1, y2 = self.touches[1].x, self.touches[2].x, self.touches[1].y, self.touches[2].y
       distance = math.sqrt( math.pow( x1 - x2, 2 ) + math.pow( y1 - y2, 2 ) )
 
@@ -188,29 +220,6 @@ function board:touch( event )
     self.touches[2].lastY = event.y
   end
   
-  return true
-end
-
--- Precondition: The board is tapped
--- Postcondition: A stone is placed on the board
-function board:tap( event )
-  if not board.gameOver then
-    local stroke = 35
-    local stone = display.newCircle( 0, 0, 140 - ( stroke / 2 ) )
-
-    stone:setStrokeColor( 0, 0, 0 )
-    if board.turn == "black" then
-      stone:setFillColor( 0, 0, 0 )
-    end
-
-    stone.strokeWidth = stroke
-    stone.x = event.x
-    stone.y = event.y
-    stone.xScale = 0.09 * board.xScale
-    stone.yScale = 0.09 * board.xScale
-    board.stones:addStone( stone )
-  end
-
   return true
 end
 

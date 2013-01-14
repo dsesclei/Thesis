@@ -32,9 +32,8 @@ end
 function scene:enterScene( event )
 	local group = self.view
 	
+  panel:addEventListener( "touch", panel )
   Runtime:addEventListener( "touch", board )
-  Runtime:addEventListener( "tap", board )
-  panel:addEventListener( "tap", panel )
 end
 
 function scene:exitScene( event )

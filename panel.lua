@@ -23,37 +23,44 @@ end
 
 -- Precondition: The panel is tapped
 -- Postcondition: The player passes. If both players pass, the game ends
-function panel:tap( event )
-  if board.gameOver then
-    panel.info.text = "Tap here to pass"
-    board:reset()
-  else
-    if board.turn == "black" then
-      panel.black.text = "PASS"
-      board.turn = "white"
+-- This listens to touch events rather than tap events because Corona will
+-- propogate the event to different layers unless they are the same type.
+function panel:touch( event )
+  if event.phase == "began" then
+    display.getCurrentStage():setFocus( self )
+  elseif event.phase == "ended" then
+    display.getCurrentStage():setFocus( nil )
+    if board.gameOver then
+      panel.info.text = "Tap here to pass"
+      board:reset()
     else
-      panel.white.text = "PASS"
-      board.turn = "black"
-    end
-
-    panel:updateTurn()
-
-    if board.passed == true then
-      board:endGame()
-      panel.black.alpha = 1
-      panel.white.alpha = 1
-      if board.blackScore > board.whiteScore then
-        panel.info.text = "Black wins!"
-      elseif board.blackScore < board.whiteScore then
-        panel.info.text = "White wins!"
+      if board.turn == "black" then
+        panel.black.text = "PASS"
+        board.turn = "white"
       else
-        panel.info.text = "Tie game!"
+        panel.white.text = "PASS"
+        board.turn = "black"
       end
 
-      panel.info.text = panel.info.text .. " Tap here to play again."
-    end
+      panel:updateTurn()
 
-    board.passed = true
+      if board.passed == true then
+        board:endGame()
+        panel.black.alpha = 1
+        panel.white.alpha = 1
+        if board.blackScore > board.whiteScore then
+          panel.info.text = "Black wins!"
+        elseif board.blackScore < board.whiteScore then
+          panel.info.text = "White wins!"
+        else
+          panel.info.text = "Tie game!"
+        end
+
+        panel.info.text = panel.info.text .. " Tap here to play again."
+      end
+
+      board.passed = true
+    end
   end
 
   -- Stop event propagation
