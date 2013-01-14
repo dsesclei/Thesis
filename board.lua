@@ -75,6 +75,7 @@ function board:reset()
   board.passed = false
   board.gameOver = false
   board.turn = "black"
+  board.states = {}
 
   while board.stones.numChildren > 0 do
     board.stones:remove( 1 )
@@ -114,19 +115,9 @@ function board:touch( event )
     if self.isTap then
       -- The board was tapped, not dragged or resized. Add a stone.
       if not board.gameOver then
-        local stroke = 35
-        local stone = display.newCircle( 0, 0, 140 - ( stroke / 2 ) )
-
-        stone:setStrokeColor( 0, 0, 0 )
-        if board.turn == "black" then
-          stone:setFillColor( 0, 0, 0 )
-        end
-
-        stone.strokeWidth = stroke
+        local stone = board.stones:newStone( board.turn )
         stone.x = event.x
         stone.y = event.y
-        stone.xScale = 0.09 * board.xScale
-        stone.yScale = 0.09 * board.xScale
         board.stones:addStone( stone )
       end
     end
@@ -228,6 +219,13 @@ end
 function board.stones:addStone( stone )
   -- Add the stone if it is over an empty grid location
   if board.stones:snapToGrid( stone ) and not board.grid[stone.row][stone.col] then
+    -- Save a snapshot of the current board state in case we need to restore it later
+    local current = board.stones:simplifyBoard( board.grid )
+    current.turn = board.turn
+    current.blackScore = board.blackScore
+    current.whiteScore = board.whiteScore
+    table.insert( board.states, 1, current )
+
     board.grid[stone.row][stone.col] = stone
 
     if board.turn == "black" then
@@ -237,18 +235,20 @@ function board.stones:addStone( stone )
       stone.color = "white"
       board.turn = "black"
     end
-    
+
     self:captureStones( stone )
 
-    -- Prevent suicides
-    if self:countLiberties( stone.row, stone.col, stone.color ) == 0 then
-      board.grid[stone.row][stone.col] = nil
-      stone:removeSelf()
+    local simplifiedState = board.stones:simplifyBoard( board.grid )
+    local isKo = self:compareStates( simplifiedState, board.states[2] )
+    local isSuicide = self:countLiberties( stone.row, stone.col, stone.color ) == 0
 
-      if board.turn == "black" then
-        board.turn = "white"
+    if isSuicide or isKo then
+      self:restoreState( table.remove( board.states, 1 ) )
+
+      if isSuicide then
+        panel.info.text = "Illegal move! (Suicide)"
       else
-        board.turn = "black"
+        panel.info.text = "Illegal move! (Ko)"
       end
 
       return
@@ -263,6 +263,91 @@ function board.stones:addStone( stone )
   else
     stone:removeSelf()
   end
+end
+
+-- Precondition: The color of the stone to be created
+-- Postcondition: The new stone
+function board.stones:newStone( color )
+  local stroke = 35
+  local stone = display.newCircle( 0, 0, 140 - ( stroke / 2 ) )
+
+  stone:setStrokeColor( 0, 0, 0 )
+  if color == "black" then
+    stone:setFillColor( 0, 0, 0 )
+  end
+  
+  stone.color = color
+
+  stone.strokeWidth = stroke
+  stone.xScale = 0.09 * board.xScale
+  stone.yScale = 0.09 * board.xScale
+
+  return stone
+end
+
+-- Precondition: The board state to be simplified
+-- Postcondition: The board grid with only the colors of the stones represented
+-- This is useful as it returns the value, rather than the reference to the grid.
+function board.stones:simplifyBoard( state )
+  local ret = {}
+
+  for i=1,19 do
+    ret[i] = {}
+    for j=1,19 do
+      if state[i][j] then
+        ret[i][j] = state[i][j].color
+      end
+    end
+  end
+
+  return ret
+end
+
+-- Precondition: Two board states to compare
+-- Postcondition: The equivalence of these two states
+function board.stones:compareStates( s1, s2 )
+  if s2 == nil or s1 == nil then
+    return false
+  end
+
+  for i=1,19 do
+    for j=1,19 do
+      if s1[i][j] ~= s2[i][j] then
+        return false
+      end
+    end
+  end
+
+  return true
+end
+
+-- Precondition: The state to restore the board to (a grid in the form that
+--               simplifyBoard returns)
+-- Postcondition: The board is updated to match the state given
+function board.stones:restoreState( state )
+  for i=1,19 do
+    for j=1,19 do
+      if board.grid[i][j] then
+        board.grid[i][j]:removeSelf()
+        board.grid[i][j] = nil
+      end
+
+      if state[i][j] then
+        local stone = board.stones:newStone( state[i][j] )
+        stone.row, stone.col = i, j
+        self:insert( stone )
+        self:updateStones()
+        board.grid[i][j] = stone
+      end
+    end
+  end
+
+
+  board.turn = state.turn
+  board.blackScore = state.blackScore
+  board.whiteScore = state.whiteScore
+  panel:updateTurn()
+  panel:updateScores()
 end
 
 -- Precondition: The stone that is doing the capturing
@@ -287,7 +372,7 @@ function board.stones:captureStones( stone )
   end
 
   for i,v in ipairs( adj ) do
-    if self:countLiberties( v.row, v.col, v.color ) == 0 and v.color ~= stone.color then
+    if v ~= nil and self:countLiberties( v.row, v.col, v.color ) == 0 and v.color ~= stone.color then
       self:removeGroup( v.row, v.col )
     end
   end

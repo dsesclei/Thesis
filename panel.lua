@@ -9,6 +9,7 @@ end
 function panel:updateScores()
   panel.black.text = "Black: " .. board.blackScore
   panel.white.text = "White: " .. board.whiteScore
+  panel.info.text = "Tap here to pass"
 end
 
 function panel:updateTurn()
@@ -31,7 +32,6 @@ function panel:touch( event )
   elseif event.phase == "ended" then
     display.getCurrentStage():setFocus( nil )
     if board.gameOver then
-      panel.info.text = "Tap here to pass"
       board:reset()
     else
       if board.turn == "black" then
